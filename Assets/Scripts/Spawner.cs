@@ -1,36 +1,27 @@
-using System.Collections;
 using UnityEngine;
-using UnityEngine.Pool;
 
 public class Spawner : MonoBehaviour
 {
-    [SerializeField] private GameObject _prefab;
     [SerializeField] private GameObject _startPoint;
-    [SerializeField] private float _repeatRate = 0.02f;
-    [SerializeField] private int _poolCapacity = 5;
-    [SerializeField] private int _poolMaxSize = 4;
+    [SerializeField] private PoolObject _pool;
+    [SerializeField] private Cube _cube;
 
-    private ObjectPool<GameObject> _pool;
-    private Coroutine _releaseCoroutine;
-
-    private void Awake()
+    private void OnEnable()
     {
-        _pool = new ObjectPool<GameObject>(
-            createFunc: () => Instantiate(_prefab),
-            actionOnGet: (obj) => ActionOnGet(obj),
-            actionOnRelease: (obj) => obj.SetActive(false),
-            actionOnDestroy: (obj) => Destroy(obj),
-            collectionCheck: true,
-            defaultCapacity: _poolCapacity,
-            maxSize: _poolMaxSize);
+        _cube.LifeIsEnd += ActionOnRelease;
     }
 
-    private void Start()
+    private void OnDisable()
     {
-        InvokeRepeating(nameof(GetCube), 0.0f, _repeatRate);
+        _cube.LifeIsEnd -= ActionOnRelease;
     }
 
-    private void ActionOnGet(GameObject obj)
+    private void Update()
+    {
+        ActionOnGet();
+    }
+
+    private void ActionOnGet()
     {
         Vector3 origin = _startPoint.transform.position;
         Vector3 range = _startPoint.transform.localScale / 2f;
@@ -39,37 +30,16 @@ public class Spawner : MonoBehaviour
                                           Random.Range(-range.z, range.z));
         Vector3 randomCoordinate = origin + randomRange;
 
-        obj.transform.position = randomCoordinate;
-        obj.SetActive(true);
-    }
-
-    private void GetCube()
-    {
-        if (_pool.CountAll <= _poolMaxSize)
+        if (_pool.CountInactive > 0)
         {
-            _pool.Get();
+            _pool.Get().gameObject.transform.position = randomCoordinate;
         }
     }
 
-    private void OnTriggerEnter(Collider other)
+    private void ActionOnRelease(Cube cube)
     {
-        _releaseCoroutine = StartCoroutine(ReleaseAfterDelay(other));
-    }
-
-    private IEnumerator ReleaseAfterDelay(Collider other)
-    {
-        yield return new WaitForSeconds(2f);
-
-        if (other.gameObject.TryGetComponent<Cube>(out Cube cube))
-        {
-            cube.CallBack(other.gameObject);
-            _pool.Release(other.gameObject);
-        }
-    }
-
-    private void Destroy(GameObject gameObject)
-    {
-        Object.Destroy(gameObject);
+        Debug.Log("Cube return to pool");
+        _pool.ReleaseCube(cube);
     }
 
     private void OnDrawGizmos()
