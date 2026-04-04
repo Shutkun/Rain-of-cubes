@@ -11,13 +11,18 @@ public class PoolObject : MonoBehaviour
 
     public int CountInactive => _pool.CountInactive;
 
+    public int PoolMaxSize => _poolMaxSize;
+
     private void Awake()
     {
         _pool = new ObjectPool<Cube>(
             createFunc: () => Instantiate(_prefab),
             actionOnGet: (cube) => cube.gameObject.SetActive(true),
-            actionOnRelease: (cube) => ReleaseCube(cube),
-            actionOnDestroy: (cube) => Destroy(cube.gameObject),
+            actionOnRelease: (cube) => cube.gameObject.SetActive(false),
+            actionOnDestroy: (cube) => 
+            { 
+                Destroy(cube.gameObject); 
+            },
             collectionCheck: true,
             defaultCapacity: _poolCapacity,
             maxSize: _poolMaxSize);
@@ -27,36 +32,18 @@ public class PoolObject : MonoBehaviour
 
     public Cube Get()
     {
-        if (_pool.CountAll < _poolMaxSize)
-        {
-            return _pool.Get();
-        }
-        else
-        {
-
-            return null;
-        }
+        return _pool.Get();
     }
 
     public void ReleaseCube(Cube cube)
     {
-
-        if (cube == null)
-        {
-            Debug.Log("Cube - null!");
-            return;
-        }
-
-        cube.gameObject.SetActive(false);
         _pool.Release(cube);
-        Debug.Log("Release cube" );
     }
 
     private void FillPool(int count)
     {
         for (int i = 0; i < count; i++)
         {
-            Debug.Log("cube to pool");
             Cube cube = _pool.Get();
             _pool.Release(cube);
         }

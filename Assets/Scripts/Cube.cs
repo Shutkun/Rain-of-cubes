@@ -10,7 +10,7 @@ public class Cube : MonoBehaviour
     public event Action<Cube> LifeIsEnd;
 
     public bool IsColorChange { get; private set; } = false;
-    
+
     private void OnEnable()
     {
         if (gameObject.TryGetComponent<Renderer>(out Renderer renderer))
@@ -21,14 +21,16 @@ public class Cube : MonoBehaviour
 
     private void OnDisable()
     {
-        Debug.Log("StopCor");
-        //StopCoroutine(_lifeCoroutine);
+        if (_lifeCoroutine != null)
+        {
+            StopCoroutine(_lifeCoroutine);
+        }
     }
 
     public void ColorChange() =>
         IsColorChange = true;
 
-    private void CallBack()
+    private void ResetTheParametrs()
     {
         if (gameObject.TryGetComponent<Renderer>(out Renderer renderer))
         {
@@ -40,7 +42,7 @@ public class Cube : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        if (other.CompareTag("Respawn"))
+        if (other.TryGetComponent(out Platform platform))
         {
             _lifeCoroutine = StartCoroutine(CounterOfLife());
             this.GetComponent<Animation>().enabled = false;
@@ -55,8 +57,8 @@ public class Cube : MonoBehaviour
         WaitForSeconds _waitForSeconds = new WaitForSeconds(UnityEngine.Random.Range(minLifeSecond, maxLifeSecond));
 
         yield return _waitForSeconds;
-        
-        CallBack();
+
+        ResetTheParametrs();
         LifeIsEnd?.Invoke(this);
     }
 }
