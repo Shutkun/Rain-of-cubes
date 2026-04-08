@@ -1,20 +1,37 @@
 using System;
 using System.Collections;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 public class Cube : MonoBehaviour
 {
+    [SerializeField] private ColorRandom _colorRandom;
+    
+    private bool _isColorChange = false;
     private Color _currentColor;
-    private Coroutine _lifeCoroutine;
+    private Vector3 _currentVelocity;
     private Renderer _renderer;
+    private Rigidbody _rigidbody;
+    private Quaternion _currentRotation;
+    private Coroutine _lifeCoroutine;
 
     public event Action<Cube> LifeIsEnd;
 
-    public bool IsColorChange { get; private set; } = false;
 
     private void Awake()
     {
         _renderer = gameObject.GetComponent<Renderer>();
+        _rigidbody = gameObject.GetComponent<Rigidbody>();
+        _currentRotation = transform.rotation;
+
+        if (_rigidbody != null)
+        {
+            _currentVelocity = _rigidbody.velocity;
+        }
+        else
+        {
+            Debug.LogWarning("Rigidbody not found");
+        }
 
         if (_renderer != null)
         {
@@ -36,17 +53,24 @@ public class Cube : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        if (other.TryGetComponent(out ColorRandom colorRandom))
+        if (other.TryGetComponent(out Platform platform))
         {
             _lifeCoroutine = StartCoroutine(CountingDownTimeOfLife());
-            colorRandom.ChangeColor(gameObject);
+            
+            if (_isColorChange == false)
+            {
+                _colorRandom.ChangeColor(_renderer);
+                _isColorChange = true;
+            }
         }
     }
 
     private void ResetParametrs()
     {
+        _isColorChange = false;
         _renderer.material.color = _currentColor;
-        IsColorChange = false;
+        _rigidbody.velocity = _currentVelocity;
+        transform.rotation = _currentRotation;
     }
 
     private IEnumerator CountingDownTimeOfLife()
@@ -54,14 +78,11 @@ public class Cube : MonoBehaviour
         float minLifeSecond = 2;
         float maxLifeSecond = 5;
 
-        WaitForSeconds _waitForSeconds = new WaitForSeconds(UnityEngine.Random.Range(minLifeSecond, maxLifeSecond));
+        WaitForSeconds _waitForSeconds = new WaitForSeconds(Random.Range(minLifeSecond, maxLifeSecond));
 
         yield return _waitForSeconds;
 
         ResetParametrs();
         LifeIsEnd?.Invoke(this);
     }
-
-    public void ColorChange() =>
-        IsColorChange = true;
 }

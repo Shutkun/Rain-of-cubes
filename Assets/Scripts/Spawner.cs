@@ -1,76 +1,80 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.Pool;
 
 public class Spawner : MonoBehaviour
 {
     [SerializeField] private GameObject _startPoint;
-    [SerializeField] private PoolObject _pool;
+    [SerializeField] private Cube _prefab;
+    [SerializeField] private int _poolCapacity = 5;
+    [SerializeField] private int _poolMaxSize = 10;
 
-    private float _timeOfWaiting = 2f;
-    private float _timeOfDelay = 0.1f;
+    private float _timeOfWaiting = 0.7f;
     private Coroutine _counter;
-    private Coroutine _delay;
+
+    private ObjectPool<Cube> _pool;
+
+    private void Awake()
+    {
+        _pool = new ObjectPool<Cube>(
+            createFunc: () => Instantiate(_prefab),
+            actionOnGet: (cube) => cube.gameObject.SetActive(true),
+            actionOnRelease: (cube) => cube.gameObject.SetActive(false),
+            actionOnDestroy: (cube) =>
+            {
+                Destroy(cube.gameObject);
+            },
+            maxSize: _poolMaxSize);
+    }
 
     private void Start()
     {
-        _counter = StartCoroutine(CounterOfAppeal());
+        _counter = StartCoroutine(WaitOfAppeal());
     }
 
     private void OnDisable()
     {
-        StopCoroutine( _counter);
-        StopCoroutine( _delay);
+        StopCoroutine(_counter);
     }
 
-    private void OnDrawGizmos()
+    private void Spawn()
     {
-        Gizmos.color = Color.yellow;
-        Gizmos.DrawWireCube(transform.position, transform.localScale);
-    }
-
-    private IEnumerator ActionOnGet()
-    {
-        WaitForSeconds _waitForSeconds = new WaitForSeconds(_timeOfDelay);
-
-        for (int i = 0; i < _pool.PoolMaxSize; i++)
+        for (int i = 0; i < _poolMaxSize; i++)
         {
-            Vector3 origin = _startPoint.transform.position;
-            Vector3 range = _startPoint.transform.localScale / 2f;
-            Vector3 randomRange = new Vector3(
-                Random.Range(-range.x, range.x),
-                Random.Range(-range.y, range.y),
-                Random.Range(-range.z, range.z)
-            );
-            Vector3 randomCoordinate = origin + randomRange;
-
             Cube cube = _pool.Get();
 
-            if (cube != null)
-            {
-                cube.LifeIsEnd += ActionOnRelease;
-                cube.gameObject.transform.position = randomCoordinate;
-                yield return _waitForSeconds;
-            }
-            else
-            {
-                yield break;
-            }
+            cube.LifeIsEnd += ActionOnRelease;
+            cube.gameObject.transform.position = GetRadomPosition();
         }
+    }
+
+    private Vector3 GetRadomPosition()
+    {
+        Vector3 origin = _startPoint.transform.position;
+        Vector3 range = _startPoint.transform.localScale / 2f;
+        Vector3 randomRange = new Vector3(
+            Random.Range(-range.x, range.x),
+            Random.Range(-range.y, range.y),
+            Random.Range(-range.z, range.z)
+        );
+        Vector3 randomCoordinate = origin + randomRange;
+
+        return randomCoordinate;
     }
 
     private void ActionOnRelease(Cube cube)
     {
         cube.LifeIsEnd -= ActionOnRelease;
-        _pool.ReleaseCube(cube);
+        _pool.Release(cube);
     }
 
-    private IEnumerator CounterOfAppeal()
+    private IEnumerator WaitOfAppeal()
     {
         WaitForSeconds _waitForSeconds = new WaitForSeconds(_timeOfWaiting);
 
         while (true)
         {
-            yield return _delay = StartCoroutine(ActionOnGet());
+            Spawn();
             yield return _waitForSeconds;
         }
     }
