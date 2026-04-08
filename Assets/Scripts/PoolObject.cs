@@ -9,8 +9,6 @@ public class PoolObject : MonoBehaviour
 
     private ObjectPool<Cube> _pool;
 
-    public int CountInactive => _pool.CountInactive;
-
     public int PoolMaxSize => _poolMaxSize;
 
     private void Awake()
@@ -26,8 +24,6 @@ public class PoolObject : MonoBehaviour
             collectionCheck: true,
             defaultCapacity: _poolCapacity,
             maxSize: _poolMaxSize);
-
-        FillPool(_poolCapacity);
     }
 
     public Cube Get()
@@ -38,14 +34,5 @@ public class PoolObject : MonoBehaviour
     public void ReleaseCube(Cube cube)
     {
         _pool.Release(cube);
-    }
-
-    private void FillPool(int count)
-    {
-        for (int i = 0; i < count; i++)
-        {
-            Cube cube = _pool.Get();
-            _pool.Release(cube);
-        }
     }
 }

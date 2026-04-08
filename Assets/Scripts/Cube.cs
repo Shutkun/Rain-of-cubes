@@ -6,16 +6,23 @@ public class Cube : MonoBehaviour
 {
     private Color _currentColor;
     private Coroutine _lifeCoroutine;
+    private Renderer _renderer;
 
     public event Action<Cube> LifeIsEnd;
 
     public bool IsColorChange { get; private set; } = false;
 
-    private void OnEnable()
+    private void Awake()
     {
-        if (gameObject.TryGetComponent<Renderer>(out Renderer renderer))
+        _renderer = gameObject.GetComponent<Renderer>();
+
+        if (_renderer != null)
         {
-            _currentColor = renderer.material.color;
+            _currentColor = _renderer.material.color;
+        }
+        else
+        {
+            Debug.LogWarning("Renderer not found");
         }
     }
 
@@ -27,29 +34,22 @@ public class Cube : MonoBehaviour
         }
     }
 
-    public void ColorChange() =>
-        IsColorChange = true;
-
-    private void ResetTheParametrs()
-    {
-        if (gameObject.TryGetComponent<Renderer>(out Renderer renderer))
-        {
-            renderer.material.color = _currentColor;
-            IsColorChange = false;
-            this.GetComponent<Animation>().enabled = true;
-        }
-    }
-
     private void OnTriggerEnter(Collider other)
     {
-        if (other.TryGetComponent(out Platform platform))
+        if (other.TryGetComponent(out ColorRandom colorRandom))
         {
-            _lifeCoroutine = StartCoroutine(CounterOfLife());
-            this.GetComponent<Animation>().enabled = false;
+            _lifeCoroutine = StartCoroutine(CountingDownTimeOfLife());
+            colorRandom.ChangeColor(gameObject);
         }
     }
 
-    private IEnumerator CounterOfLife()
+    private void ResetParametrs()
+    {
+        _renderer.material.color = _currentColor;
+        IsColorChange = false;
+    }
+
+    private IEnumerator CountingDownTimeOfLife()
     {
         float minLifeSecond = 2;
         float maxLifeSecond = 5;
@@ -58,7 +58,10 @@ public class Cube : MonoBehaviour
 
         yield return _waitForSeconds;
 
-        ResetTheParametrs();
+        ResetParametrs();
         LifeIsEnd?.Invoke(this);
     }
+
+    public void ColorChange() =>
+        IsColorChange = true;
 }

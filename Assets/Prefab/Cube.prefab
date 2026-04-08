@@ -14,7 +14,6 @@ GameObject:
   - component: {fileID: 6305979085773037121}
   - component: {fileID: -4150639262788872278}
   - component: {fileID: 4749118749516415898}
-  - component: {fileID: 7239840474178523988}
   - component: {fileID: -9174468300166172075}
   m_Layer: 0
   m_Name: Cube
@@ -157,22 +156,6 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 2
---- !u!111 &7239840474178523988
-Animation:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 99930290704742895}
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Animation: {fileID: 7400000, guid: ac203cb996aa31a46af87ef29d829410, type: 2}
-  m_Animations:
-  - {fileID: 7400000, guid: ac203cb996aa31a46af87ef29d829410, type: 2}
-  m_WrapMode: 0
-  m_PlayAutomatically: 1
-  m_AnimatePhysics: 0
-  m_CullingType: 0
 --- !u!114 &-9174468300166172075
 MonoBehaviour:
   m_ObjectHideFlags: 0

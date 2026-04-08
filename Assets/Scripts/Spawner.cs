@@ -6,15 +6,32 @@ public class Spawner : MonoBehaviour
     [SerializeField] private GameObject _startPoint;
     [SerializeField] private PoolObject _pool;
 
+    private float _timeOfWaiting = 2f;
+    private float _timeOfDelay = 0.1f;
     private Coroutine _counter;
+    private Coroutine _delay;
 
     private void Start()
     {
         _counter = StartCoroutine(CounterOfAppeal());
     }
 
+    private void OnDisable()
+    {
+        StopCoroutine( _counter);
+        StopCoroutine( _delay);
+    }
+
+    private void OnDrawGizmos()
+    {
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawWireCube(transform.position, transform.localScale);
+    }
+
     private IEnumerator ActionOnGet()
     {
+        WaitForSeconds _waitForSeconds = new WaitForSeconds(_timeOfDelay);
+
         for (int i = 0; i < _pool.PoolMaxSize; i++)
         {
             Vector3 origin = _startPoint.transform.position;
@@ -32,7 +49,7 @@ public class Spawner : MonoBehaviour
             {
                 cube.LifeIsEnd += ActionOnRelease;
                 cube.gameObject.transform.position = randomCoordinate;
-                yield return new WaitForSeconds(0.1f);
+                yield return _waitForSeconds;
             }
             else
             {
@@ -41,29 +58,20 @@ public class Spawner : MonoBehaviour
         }
     }
 
-    private void OnDisable()
-    {
-        StopAllCoroutines();
-    }
-
     private void ActionOnRelease(Cube cube)
     {
         cube.LifeIsEnd -= ActionOnRelease;
         _pool.ReleaseCube(cube);
     }
 
-    private void OnDrawGizmos()
-    {
-        Gizmos.color = Color.yellow;
-        Gizmos.DrawWireCube(transform.position, transform.localScale);
-    }
-
     private IEnumerator CounterOfAppeal()
     {
+        WaitForSeconds _waitForSeconds = new WaitForSeconds(_timeOfWaiting);
+
         while (true)
         {
-            yield return StartCoroutine(ActionOnGet());
-            yield return new WaitForSeconds(2f);
+            yield return _delay = StartCoroutine(ActionOnGet());
+            yield return _waitForSeconds;
         }
     }
 }
